@@ -1,4 +1,3 @@
-# JPMC_TEST
 TradeSettlementProcessor:
 
 How to run :
