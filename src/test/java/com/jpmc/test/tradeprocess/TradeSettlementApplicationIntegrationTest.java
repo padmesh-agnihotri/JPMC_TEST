@@ -64,7 +64,7 @@ public class TradeSettlementApplicationIntegrationTest {
 		TradeSettlementApplication.main(EMPTY_ARRAY);
 		validateLogs("Report for OUTGOING instructions",
 				     " SettlementDate: 2018-12-20 Total Amount settled: 10000.0",
-				     " Ranking: 1 ## Entities : ENTITY ## Total Amount settled: 10000.0",
+				     " Ranking: 1 ## Entities : [ENTITY] ## Total Amount settled: 10000.0",
 				     "No instructions to report for side : INCOMING");
 	}
 
@@ -74,7 +74,7 @@ public class TradeSettlementApplicationIntegrationTest {
 		TradeSettlementApplication.main(EMPTY_ARRAY);
 		validateLogs("Report for OUTGOING instructions",
 				     " SettlementDate: 2018-12-24 Total Amount settled: 10000.0",
-				     " Ranking: 1 ## Entities : ENTITY ## Total Amount settled: 10000.0",
+				     " Ranking: 1 ## Entities : [ENTITY] ## Total Amount settled: 10000.0",
 				     "No instructions to report for side : INCOMING");
 	}
 
@@ -84,7 +84,7 @@ public class TradeSettlementApplicationIntegrationTest {
 		TradeSettlementApplication.main(EMPTY_ARRAY);
 		validateLogs("Report for OUTGOING instructions",
 				     " SettlementDate: 2018-12-23 Total Amount settled: 10000.0",
-				     " Ranking: 1 ## Entities : ENTITY ## Total Amount settled: 10000.0",
+				     " Ranking: 1 ## Entities : [ENTITY] ## Total Amount settled: 10000.0",
 				     "No instructions to report for side : INCOMING");
 	}
 
@@ -94,7 +94,7 @@ public class TradeSettlementApplicationIntegrationTest {
 		TradeSettlementApplication.main(EMPTY_ARRAY);
 		validateLogs("Report for OUTGOING instructions",
 				     " SettlementDate: 2018-12-23 Total Amount settled: 10000.0",
-				     " Ranking: 1 ## Entities : ENTITY ## Total Amount settled: 10000.0",
+				     " Ranking: 1 ## Entities : [ENTITY] ## Total Amount settled: 10000.0",
 				     "No instructions to report for side : INCOMING");
 	}
 	@Test
@@ -103,13 +103,17 @@ public class TradeSettlementApplicationIntegrationTest {
 		TradeSettlementApplication.main(EMPTY_ARRAY);
 		validateLogs("Report for OUTGOING instructions",
 				     " SettlementDate: 2018-12-24 Total Amount settled: 10000.0",
-				     " Ranking: 1 ## Entities : ENTITY ## Total Amount settled: 10000.0",
+				     " Ranking: 1 ## Entities : [ENTITY] ## Total Amount settled: 10000.0",
 				     "No instructions to report for side : INCOMING");
 	}
 
 	@Test
-	public void checkReportsWhenMultipleEntitiesHaveSameSettledAmount() throws Exception{
+	public void whenMultipleEntitiesHaveSameSettledAmountAndMultipleTrades() throws Exception{
 		writeDataToFile("ENTITY,BUY,10,USD,22 Dec 2018,22 Dec 2018,10,100",
+				        "\n",
+				        "ENTITY,BUY,10,USD,22 Dec 2018,22 Dec 2018,10,100",
+				        "\n",
+				        "ENTITY1,BUY,10,USD,22 Dec 2018,22 Dec 2018,10,100",
 				        "\n",
 				        "ENTITY1,BUY,10,USD,22 Dec 2018,22 Dec 2018,10,100",
 				        "\n",
@@ -120,14 +124,14 @@ public class TradeSettlementApplicationIntegrationTest {
 				        "ENTITY4,BUY,1,USD,22 Dec 2018,22 Dec 2018,10,100");
 		TradeSettlementApplication.main(EMPTY_ARRAY);
 		validateLogs("Report for OUTGOING instructions",
-				     " SettlementDate: 2018-12-24 Total Amount settled: 25000.0",
-				     " Ranking: 1 ## Entities : ENTITY, ENTITY1 ## Total Amount settled: 10000.0",
-				     " Ranking: 2 ## Entities : ENTITY2, ENTITY3 ## Total Amount settled: 2000.0",
-				     " Ranking: 3 ## Entities : ENTITY4 ## Total Amount settled: 1000.0",
+				     " SettlementDate: 2018-12-24 Total Amount settled: 45000.0",
+				     " Ranking: 1 ## Entities : [ENTITY, ENTITY1] ## Total Amount settled: 20000.0",
+				     " Ranking: 2 ## Entities : [ENTITY2, ENTITY3] ## Total Amount settled: 2000.0",
+				     " Ranking: 3 ## Entities : [ENTITY4] ## Total Amount settled: 1000.0",
 				     "No instructions to report for side : INCOMING");
 	}
 	@Test
-	public void checkReportsWhenMultipleEntitiesHaveDifferentSettlementDay() throws Exception{
+	public void whenMultipleEntitiesHaveDifferentSettlementDay() throws Exception{
 		writeDataToFile("ENTITY,BUY,10,USD,22 Dec 2018,22 Dec 2018,10,100",
 		                "\n",
 		                "ENTITY1,BUY,10,AED,22 Dec 2018,22 Dec 2018,10,100",
@@ -141,9 +145,9 @@ public class TradeSettlementApplicationIntegrationTest {
 		validateLogs("Report for OUTGOING instructions",
 				     " SettlementDate: 2018-12-23 Total Amount settled: 10000.0",
 				     " SettlementDate: 2018-12-24 Total Amount settled: 15000.0",
-				     " Ranking: 1 ## Entities : ENTITY, ENTITY1 ## Total Amount settled: 10000.0",
-				     " Ranking: 2 ## Entities : ENTITY2, ENTITY3 ## Total Amount settled: 2000.0",
-				     " Ranking: 3 ## Entities : ENTITY4 ## Total Amount settled: 1000.0",
+				     " Ranking: 1 ## Entities : [ENTITY, ENTITY1] ## Total Amount settled: 10000.0",
+				     " Ranking: 2 ## Entities : [ENTITY2, ENTITY3] ## Total Amount settled: 2000.0",
+				     " Ranking: 3 ## Entities : [ENTITY4] ## Total Amount settled: 1000.0",
 				     "No instructions to report for side : INCOMING");
 	}
 	

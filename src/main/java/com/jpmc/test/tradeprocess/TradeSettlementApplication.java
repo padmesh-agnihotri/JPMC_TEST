@@ -10,8 +10,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import com.jpmc.test.tradeprocess.model.TradeInstruction;
@@ -46,9 +49,12 @@ public class TradeSettlementApplication {
 			System.out.println("Unable to read instructions from file at "+filePath+" Terminating the process.. "+e.getMessage());
 			return;
 		}
+		//always a good practice to keep empty collection instead of null
 		final List<String> invalidInstructionList = new ArrayList<>();
-		final List<TradeInstructionProcessResult> buyTradeInstructionList = new ArrayList<>();
-		final List<TradeInstructionProcessResult> sellTradeInstructionList = new ArrayList<>();
+		final Map<String, Double> buyEntitiesSettlementAmountMap = new HashMap<String, Double>();
+		final TreeMap<String,Double> buySettledAmountByDate = new TreeMap<String,Double>();
+		final Map<String, Double> sellEntitiesSettlementAmountMap = new HashMap<String,Double>();
+		final TreeMap<String,Double> sellSettledAmountByDate = new TreeMap<String,Double>();
 		final TradeInstructionProcessor processor = new TradeInstructionProcessor();
 		final ReportGenerator reportGenerator = new ReportGenerator();
 		
@@ -60,17 +66,35 @@ public class TradeSettlementApplication {
 				continue;
 			}
 			if(processResult.getSide().equals(BUY.name())) {
-				buyTradeInstructionList.add(processResult);
+				updateDataForEntitiesOrderedByAmount(buyEntitiesSettlementAmountMap, processResult);
+				updateDataForSettledAmountByDateReport(buySettledAmountByDate,processResult);
 			} else {
-				sellTradeInstructionList.add(processResult);
+				updateDataForEntitiesOrderedByAmount(sellEntitiesSettlementAmountMap, processResult);
+				updateDataForSettledAmountByDateReport(sellSettledAmountByDate,processResult);
 			}
 		}
-		reportGenerator.generateReports(buyTradeInstructionList,"OUTGOING");
-		reportGenerator.generateReports(sellTradeInstructionList,"INCOMING");
+		reportGenerator.generateReports(buySettledAmountByDate,buyEntitiesSettlementAmountMap,"OUTGOING");
+		reportGenerator.generateReports(sellSettledAmountByDate,sellEntitiesSettlementAmountMap,"INCOMING");
 		reportGenerator.reportInvalidInstructions(invalidInstructionList);
 		
 
 
+	}
+
+	private void updateDataForSettledAmountByDateReport(
+			final TreeMap<String, Double> buySettledAmountByDate,
+			final TradeInstructionProcessResult processResult) {
+		buySettledAmountByDate.put(processResult.getAdjustedSettlementDate().toString(),
+				                   buySettledAmountByDate.getOrDefault(processResult.getAdjustedSettlementDate().toString(),0.0)
+				                   +processResult.getSettlementAmount());
+	}
+
+	private void updateDataForEntitiesOrderedByAmount(
+			final Map<String, Double> buyEntitiesOrderedByAmount,
+			final TradeInstructionProcessResult processResult) {
+		buyEntitiesOrderedByAmount.put(processResult.getEntity(),
+				                       buyEntitiesOrderedByAmount.getOrDefault(processResult.getEntity().toString(),0.0)
+                                       +processResult.getSettlementAmount());
 	}
 
 	private List<TradeInstruction> readAndParseFile(final String filePath) throws IOException {

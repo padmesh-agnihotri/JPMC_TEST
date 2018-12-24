@@ -4,28 +4,28 @@ package com.jpmc.test.tradeprocess.process;
  * class to generate report.The output is printed on the console 
  * but could be moved to file or DB
  */
-import static java.lang.String.join;
-import static java.util.stream.Collectors.toMap;
+import static java.util.Collections.reverseOrder;
 
-import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.jpmc.test.tradeprocess.model.TradeInstructionProcessResult;
-
 public class ReportGenerator {
 	
-	public void generateReports(final List<TradeInstructionProcessResult> tradeInstructionList,String side) {
-		if (tradeInstructionList.size()==0) {
+	public void generateReports(TreeMap<String,Double> settledAmountByDate,Map<String,Double> entitySettlementAmountMap,String side) {
+		//safe to check either of the two maps
+		if (settledAmountByDate == null || settledAmountByDate.size()==0) {
 			System.out.println("No instructions to report for side : "+side);
 			return;
 		}
 		System.out.println("Report for "+side+" instructions");
 		System.out.println("########### Total amount settled grouped by Settlement Date ##########");
-		generateReportForTotalSettlementAmountByDay(tradeInstructionList);
+		generateReportForTotalSettlementAmountByDay(settledAmountByDate);
 		System.out.println("########### Entities ranking based on settlement Amount #############");
-		generateReportForEntityRankingBySettlementAmount(tradeInstructionList);
+		generateReportForEntityRankingBySettlementAmount(entitySettlementAmountMap);
 	}
 	
 	public void reportInvalidInstructions(List<String> invalidInstructions) {
@@ -38,25 +38,21 @@ public class ReportGenerator {
 		invalidInstructions.stream().forEach(System.out::println);
 	}
 	
-	private void generateReportForTotalSettlementAmountByDay(final List<TradeInstructionProcessResult> tradeInstructionListBySide){
-		final TreeMap<LocalDate,Double> dateWithSettlementAmount =  tradeInstructionListBySide.stream().collect(
-				                                                     toMap(TradeInstructionProcessResult::getAdjustedSettlementDate,
-                                                                     TradeInstructionProcessResult::getSettlementAmount,
-                                                                     (existingAmount,newAmount)->existingAmount+newAmount,
-                                                                     TreeMap::new));
-		
-		dateWithSettlementAmount.entrySet().stream()
+	private void generateReportForTotalSettlementAmountByDay(final TreeMap<String,Double> settledAmountByDate){
+		settledAmountByDate.entrySet().stream()
 		                                   .forEach(entry -> System.out.println(" SettlementDate: "+entry.getKey()+
 				                                                                " Total Amount settled: "+entry.getValue()));
 	}
-	
-	private void generateReportForEntityRankingBySettlementAmount(final List<TradeInstructionProcessResult> tradeInstructionListBySide) {
-		final TreeMap<Double,String> entityWithAmount = tradeInstructionListBySide.stream().collect(toMap(TradeInstructionProcessResult::getSettlementAmount,
-                                                           TradeInstructionProcessResult::getEntity,
-                                                           (existingEntity,newEntity)->join(", ", existingEntity,  newEntity),
-                                                           TreeMap::new));
+	/*
+	 * Create treemap to have amount as key and list of entities as list.The argument entitySettlementAmountMap
+	 * contains Entity with its total settled amount.
+	 */
+	private void generateReportForEntityRankingBySettlementAmount(final Map<String,Double> entitySettlementAmountMap) {
+		final TreeMap<Double,Set<String>> entityOrderedByAmount = new TreeMap<Double,Set<String>>(reverseOrder());
+		entitySettlementAmountMap.entrySet().stream().forEach(entry -> entityOrderedByAmount.computeIfAbsent(
+				                                                                     entry.getValue(),k -> new HashSet<String>()).add(entry.getKey()));
 		final AtomicInteger index = new AtomicInteger();
-		entityWithAmount.descendingMap().entrySet().stream()
+		entityOrderedByAmount.entrySet().stream()
                                    .forEach(entry -> System.out.println(" Ranking: "+index.incrementAndGet()+
                                 		                                " ## Entities : "+entry.getValue()+
                                                                         " ## Total Amount settled: "+entry.getKey()));
